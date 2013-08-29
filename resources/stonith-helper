@@ -253,7 +253,13 @@ standby_wait() {
 		return
 	fi
 
-	${HA_LOG_SH} debug "Run standby_wait"
+	if crm_node -p | grep -q -w "$1"; then
+		${HA_LOG_SH} info "Host $1 is alive. Standby check is skipped."
+		return
+	else
+		${HA_LOG_SH} info "Host $1 is dead. Standby check is invoked"
+	fi
+
 	eval ${standby_check_command} >/dev/null 2>&1
 	rc=$?
 	${HA_LOG_SH} debug "standby check command: \"${standby_check_command}\" (rc=${rc})"
@@ -283,7 +289,7 @@ off|reset)
 	check_parameters
 
 	dead_check
-	standby_wait
+	standby_wait $2
 	quorum_check
 	exit 1
 	;;
